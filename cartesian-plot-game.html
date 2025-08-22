@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimal Cartesian Plot Game</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #fafafa;
+      color: #222;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 320px;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+      letter-spacing: 1px;
+    }
+    #game {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #plot {
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 8px #0001;
+    }
+    #inputs {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    #inputs input[type=number] {
+      width: 48px;
+      font-size: 1em;
+      padding: 2px 4px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      background: #f5f5f5;
+      color: #222;
+    }
+    #inputs button {
+      font-size: 1em;
+      padding: 2px 10px;
+      border: none;
+      border-radius: 3px;
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #inputs button:hover {
+      background: #444;
+    }
+    #overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.25);
+      z-index: 2;
+      font-size: 2em;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 2px 8px #0008;
+      transition: background 0.3s;
+    }
+    #overlay.red {
+      background: rgba(200,0,0,0.35);
+    }
+    #overlay.green {
+      background: rgba(0,180,0,0.30);
+    }
+  </style>
+</head>
+<body>
+  <div id="scoreboard">
+    <span id="incorrect">0</span>
+    <span id="tries">3</span>
+    <span id="correct">0</span>
+  </div>
+  <div id="game">
+    <canvas id="plot" width="400" height="400"></canvas>
+    <div id="overlay"></div>
+    <form id="inputs" autocomplete="off">
+      <label>x: <input id="x" type="number" min="-10" max="10" required></label>
+      <label>y: <input id="y" type="number" min="-10" max="10" required></label>
+      <button type="submit">Guess</button>
+    </form>
+  </div>
+  <script>
+    // --- Game State ---
+    let correct = 0, incorrect = 0, tries = 3;
+    let target = {x: 0, y: 0};
+    const min = -10, max = 10;
+    // --- DOM ---
+    const plot = document.getElementById('plot');
+    const ctx = plot.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const scoreboard = {
+      correct: document.getElementById('correct'),
+      incorrect: document.getElementById('incorrect'),
+      tries: document.getElementById('tries')
+    };
+    const form = document.getElementById('inputs');
+    const xInput = document.getElementById('x');
+    const yInput = document.getElementById('y');
+    // --- Helpers ---
+    function randInt(a, b) {
+      return Math.floor(Math.random() * (b - a + 1)) + a;
+    }
+    function newTarget() {
+      target.x = randInt(min, max);
+      target.y = randInt(min, max);
+      tries = 3;
+      updateScoreboard();
+      draw();
+    }
+    function updateScoreboard() {
+      scoreboard.correct.textContent = correct;
+      scoreboard.incorrect.textContent = incorrect;
+      scoreboard.tries.textContent = tries;
+    }
+    function showOverlay(type, msg) {
+      overlay.className = type;
+      overlay.textContent = msg;
+      overlay.style.display = 'flex';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 1200);
+    }
+    // --- Drawing ---
+    function draw() {
+      ctx.clearRect(0, 0, plot.width, plot.height);
+      // Draw grid
+      ctx.save();
+      ctx.strokeStyle = '#ddd';
+      ctx.lineWidth = 1;
+      for (let i = min; i <= max; i++) {
+        // vertical
+        let x = toPx(i, 0).x;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, plot.height);
+        ctx.stroke();
+        // horizontal
+        let y = toPx(0, i).y;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(plot.width, y);
+        ctx.stroke();
+      }
+      // Draw axes
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 2;
+      // y axis
+      ctx.beginPath();
+      ctx.moveTo(toPx(0,0).x, 0);
+      ctx.lineTo(toPx(0,0).x, plot.height);
+      ctx.stroke();
+      // x axis
+      ctx.beginPath();
+      ctx.moveTo(0, toPx(0,0).y);
+      ctx.lineTo(plot.width, toPx(0,0).y);
+      ctx.stroke();
+      // Draw numbers
+      ctx.fillStyle = '#888';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (let i = min; i <= max; i++) {
+        if (i !== 0) {
+          // x numbers
+          ctx.fillText(i, toPx(i,0).x, toPx(0,0).y + 2);
+          // y numbers
+          ctx.save();
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(i, toPx(0,0).x - 4, toPx(0,i).y);
+          ctx.restore();
+        }
+      }
+      // Draw target dot
+      ctx.beginPath();
+      ctx.arc(toPx(target.x, target.y).x, toPx(target.x, target.y).y, 7, 0, 2*Math.PI);
+      ctx.fillStyle = 'red';
+      ctx.fill();
+      ctx.restore();
+    }
+    function toPx(x, y) {
+      // Map (-10,10) to (0,400)
+      return {
+        x: ((x - min) / (max - min)) * plot.width,
+        y: plot.height - ((y - min) / (max - min)) * plot.height
+      };
+    }
+    // --- Game Logic ---
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      const guessX = parseInt(xInput.value, 10);
+      const guessY = parseInt(yInput.value, 10);
+      if (guessX === target.x && guessY === target.y) {
+        correct++;
+        showOverlay('green', '😊 CORRECT 😊');
+        setTimeout(() => {
+          newTarget();
+          xInput.value = '';
+          yInput.value = '';
+        }, 1200);
+      } else {
+        tries--;
+        incorrect++;
+        showOverlay('red', '😞 WRONG 😞');
+        if (tries === 0) {
+          setTimeout(() => {
+            newTarget();
+            xInput.value = '';
+            yInput.value = '';
+          }, 1200);
+        }
+      }
+      updateScoreboard();
+    };
+    // --- Init ---
+    newTarget();
+  </script>
+</body>
+</html>

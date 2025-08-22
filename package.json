@@ -1,0 +1,11 @@
+{
+  "name": "22-aug-25-plotting",
+  "version": "1.0.0",
+  "description": "Minimal plotting game for Cartesian coordinates.",
+  "scripts": {
+    "start": "npx serve -l 5500 ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}

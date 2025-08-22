@@ -4,14 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Minimal Cartesian Plot Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Alore&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Norican&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap" rel="stylesheet">
   <style>
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
-      background: #fafafa;
+      background: #f8f5ec;
       color: #222;
-      font-family: system-ui, sans-serif;
+      font-family: 'Alore', system-ui, sans-serif;
     }
     body {
       display: flex;
@@ -54,6 +57,7 @@
       border-radius: 3px;
       background: #f5f5f5;
       color: #222;
+      font-family: 'Alore', system-ui, sans-serif;
     }
     #inputs button {
       font-size: 1em;
@@ -64,6 +68,7 @@
       color: #fff;
       cursor: pointer;
       transition: background 0.2s;
+      font-family: 'Alore', system-ui, sans-serif;
     }
     #inputs button:hover {
       background: #444;
@@ -81,6 +86,7 @@
       color: #fff;
       text-shadow: 0 2px 8px #0008;
       transition: background 0.3s;
+      font-family: 'Alore', system-ui, sans-serif;
     }
     #overlay.red {
       background: rgba(200,0,0,0.35);
@@ -88,20 +94,29 @@
     #overlay.green {
       background: rgba(0,180,0,0.30);
     }
+    h1 {
+      font-family: 'Norican', cursive, sans-serif !important;
+      font-size: 2.3em;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #1a1a1a;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    #instructions, #scoreboard, #target-coord, label, button, span, div, a {
+      font-family: 'Alore', system-ui, sans-serif !important;
+    }
   </style>
 </head>
 <body>
+  <h1>Cartesian Plotting Game</h1>
+  <!-- Game by nwalte11 -->
   <div id="game" style="position:relative;">
-    <div id="target-coord" style="position:absolute;top:8px;right:12px;font-size:1.1em;color:#444;z-index:3;background:rgba(255,255,255,0.8);padding:2px 8px;border-radius:4px;user-select:none;"></div>
-    <canvas id="plot" width="400" height="400" style="display:block;"></canvas>
+    <div id="target-coord" style="position:absolute;top:8px;right:12px;font-size:1.08em;color:#222;z-index:3;background:rgba(255,255,255,0.85);padding:2px 10px 2px 10px;border-radius:4px;user-select:none;font-family:'Inter','Segoe UI','Arial',sans-serif;font-weight:400;letter-spacing:0.01em;"></div>
+  <canvas id="plot" width="480" height="480"></canvas>
     <div id="overlay"></div>
-    <div id="modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);z-index:10;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:0 18px;">
-      <div style="font-size:1.3em;font-weight:bold;margin-bottom:12px;">How to Plot Coordinates</div>
-      <div style="font-size:1em;max-width:340px;margin-bottom:18px;">
-        The first number (x) tells you how far to move left or right from the center. The second number (y) tells you how far to move up or down. For example, (3, -2) means 3 right and 2 down from the center. Try to match the red dot to the target coordinate!
-      </div>
-      <button id="modal-next" style="font-size:1em;padding:6px 22px;border:none;border-radius:4px;background:#222;color:#fff;cursor:pointer;">Next</button>
-    </div>
+  </div>
+      
   </div>
   <div id="scoreboard" style="margin-top:18px; display: flex; flex-direction: column; align-items: center;">
     <div style="display: flex; gap: 60px; font-size: 1.2em;">
@@ -115,15 +130,24 @@
       <span>Correct</span>
     </div>
   </div>
-  <div id="instructions" style="margin-top:18px;font-size:1em;color:#444;text-align:center;max-width:420px;">
-    Click on the grid to move the red dot. Match the dot to the target coordinate shown at the top right. You have 3 tries for each target. Score points for correct matches and see your tally below!
+  <div id="instructions" style="margin-top:18px;font-size:1em;color:#444;text-align:center;max-width:520px;">
+  Click anywhere on the grid to move the red dot. Try to match the red dot to the target coordinate shown at the top right. You have 3 tries for each target. Your score is tracked below the grid.
+</div>
+<div id="modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);z-index:10;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:0 18px;">
+  <div style="font-size:1.3em;font-weight:700;margin-bottom:10px;letter-spacing:0.5px;">Assistance</div>
+  <div style="font-size:1.2em;font-weight:600;margin-bottom:12px;">How to Plot Coordinates</div>
+  <div style="font-size:1em;max-width:340px;margin-bottom:18px;">
+    The first number (x) tells you how far to move left or right from the center. The second number (y) tells you how far to move up or down. For example, (3, -2) means 3 right and 2 down from the center.
   </div>
-  <script>
+  <a href="https://www.youtube.com/watch?v=VDONZfzIDJU" target="_blank" style="display:inline-block;margin-bottom:18px;color:#1976d2;text-decoration:underline;font-size:1em;">Watch: Plotting Points on a Coordinate Plane (YouTube)</a>
+  <button id="modal-next" style="font-size:1em;padding:6px 22px;border:none;border-radius:4px;background:#222;color:#fff;cursor:pointer;">Next</button>
+</div>
+<iframe width="0" height="0" src="https://www.youtube.com/embed/Q89Dzox4jAE?autoplay=1&loop=1&playlist=Q89Dzox4jAE" title="Background Sound" frameborder="0" allow="autoplay" allowfullscreen style="display:none;"></iframe>
+<script>
     // --- Game State ---
   let correct = 0, incorrect = 0, tries = 3;
   let target = {x: 0, y: 0};
   let dot = {x: 0, y: 0};
-  let paused = false;
   const min = -10, max = 10;
     // --- DOM ---
     const plot = document.getElementById('plot');
@@ -147,7 +171,6 @@
       dot.x = 0;
       dot.y = 0;
       tries = 3;
-      paused = false;
       updateScoreboard();
       updateTargetCoord();
       draw();
@@ -173,7 +196,7 @@
       ctx.clearRect(0, 0, plot.width, plot.height);
       // Draw grid
       ctx.save();
-      ctx.strokeStyle = '#ddd';
+      ctx.strokeStyle = '#6fa8dc'; // light blue
       ctx.lineWidth = 1;
       for (let i = min; i <= max; i++) {
         // vertical
@@ -203,19 +226,19 @@
       ctx.lineTo(plot.width, toPx(0,0).y);
       ctx.stroke();
       // Draw numbers
-      ctx.fillStyle = '#888';
-      ctx.font = '12px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
+  ctx.fillStyle = '#222';
+  ctx.font = `400 ${Math.max(18, plot.width/28)}px 'Inter', 'Segoe UI', Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
       for (let i = min; i <= max; i++) {
         if (i !== 0) {
           // x numbers
-          ctx.fillText(i, toPx(i,0).x, toPx(0,0).y + 2);
+          ctx.fillText(i, toPx(i,0).x + 8 * Math.sign(i), toPx(0,0).y + 8);
           // y numbers
           ctx.save();
           ctx.textAlign = 'right';
           ctx.textBaseline = 'middle';
-          ctx.fillText(i, toPx(0,0).x - 4, toPx(0,i).y);
+          ctx.fillText(i, toPx(0,0).x - plot.width/38, toPx(0,i).y + 8 * Math.sign(i));
           ctx.restore();
         }
       }
@@ -227,16 +250,17 @@
       ctx.restore();
     }
     function toPx(x, y) {
-      // Map (-10,10) to (0,400)
+      // Add margin so numbers are inside the grid
+      const margin = plot.width * 0.06;
+      const gridSize = plot.width - 2 * margin;
       return {
-        x: ((x - min) / (max - min)) * plot.width,
-        y: plot.height - ((y - min) / (max - min)) * plot.height
+        x: margin + ((x - min) / (max - min)) * gridSize,
+        y: plot.height - (margin + ((y - min) / (max - min)) * gridSize)
       };
     }
     // --- Game Logic ---
-    // Mouse move: dot follows mouse
+    let paused = false;
     plot.addEventListener('mousemove', function(e) {
-      if (paused) return;
       const rect = plot.getBoundingClientRect();
       const px = e.clientX - rect.left;
       const py = e.clientY - rect.top;
@@ -247,19 +271,15 @@
       draw();
     });
 
-    // Mouse leave: reset dot to center
     plot.addEventListener('mouseleave', function() {
-      if (paused) return;
       dot.x = 0;
       dot.y = 0;
       draw();
     });
 
-    // Click: guess
     plot.addEventListener('click', function(e) {
       if (paused) return;
       // dot.x, dot.y already set by mousemove
-      // Check if correct
       if (dot.x === target.x && dot.y === target.y) {
         correct++;
         showOverlay('green', '😊 CORRECT 😊');
@@ -279,14 +299,24 @@
       }
       updateScoreboard();
     });
-
-    // Modal next button
     modalNext.addEventListener('click', function() {
       modal.style.display = 'none';
+      paused = false;
       newTarget();
     });
-  // --- Init ---
+
+  // --- Responsive Canvas Init ---
+  function resizeCanvas() {
+    const size = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.7);
+    plot.width = size;
+    plot.height = size;
+  }
+  resizeCanvas();
   newTarget();
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    draw();
+  });
   </script>
 </body>
 </html>
