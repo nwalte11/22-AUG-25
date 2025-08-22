@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimal Cartesian Plot Game</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #fafafa;
+      color: #222;
+      font-family: system-ui, sans-serif;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 320px;
+      margin-bottom: 10px;
+      font-size: 1.1em;
+      letter-spacing: 1px;
+    }
+    #game {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #plot {
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 8px #0001;
+    }
+    #inputs {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    #inputs input[type=number] {
+      width: 48px;
+      font-size: 1em;
+      padding: 2px 4px;
+      border: 1px solid #bbb;
+      border-radius: 3px;
+      background: #f5f5f5;
+      color: #222;
+    }
+    #inputs button {
+      font-size: 1em;
+      padding: 2px 10px;
+      border: none;
+      border-radius: 3px;
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #inputs button:hover {
+      background: #444;
+    }
+    #overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.25);
+      z-index: 2;
+      font-size: 2em;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 2px 8px #0008;
+      transition: background 0.3s;
+    }
+    #overlay.red {
+      background: rgba(200,0,0,0.35);
+    }
+    #overlay.green {
+      background: rgba(0,180,0,0.30);
+    }
+  </style>
+</head>
+<body>
+  <div id="game" style="position:relative;">
+    <div id="target-coord" style="position:absolute;top:8px;right:12px;font-size:1.1em;color:#444;z-index:3;background:rgba(255,255,255,0.8);padding:2px 8px;border-radius:4px;user-select:none;"></div>
+    <canvas id="plot" width="400" height="400" style="display:block;"></canvas>
+    <div id="overlay"></div>
+    <div id="modal" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);z-index:10;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:0 18px;">
+      <div style="font-size:1.3em;font-weight:bold;margin-bottom:12px;">How to Plot Coordinates</div>
+      <div style="font-size:1em;max-width:340px;margin-bottom:18px;">
+        The first number (x) tells you how far to move left or right from the center. The second number (y) tells you how far to move up or down. For example, (3, -2) means 3 right and 2 down from the center. Try to match the red dot to the target coordinate!
+      </div>
+      <button id="modal-next" style="font-size:1em;padding:6px 22px;border:none;border-radius:4px;background:#222;color:#fff;cursor:pointer;">Next</button>
+    </div>
+  </div>
+  <div id="scoreboard" style="margin-top:18px; display: flex; flex-direction: column; align-items: center;">
+    <div style="display: flex; gap: 60px; font-size: 1.2em;">
+      <span id="incorrect">0</span>
+      <span id="tries">3</span>
+      <span id="correct">0</span>
+    </div>
+    <div style="display: flex; gap: 38px; font-size: 0.95em; color: #666; margin-top: 2px; letter-spacing: 0.5px;">
+      <span>Incorrect</span>
+      <span>Tries</span>
+      <span>Correct</span>
+    </div>
+  </div>
+  <div id="instructions" style="margin-top:18px;font-size:1em;color:#444;text-align:center;max-width:420px;">
+    Click on the grid to move the red dot. Match the dot to the target coordinate shown at the top right. You have 3 tries for each target. Score points for correct matches and see your tally below!
+  </div>
+  <script>
+    // --- Game State ---
+  let correct = 0, incorrect = 0, tries = 3;
+  let target = {x: 0, y: 0};
+  let dot = {x: 0, y: 0};
+  let paused = false;
+  const min = -10, max = 10;
+    // --- DOM ---
+    const plot = document.getElementById('plot');
+    const ctx = plot.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const scoreboard = {
+      correct: document.getElementById('correct'),
+      incorrect: document.getElementById('incorrect'),
+      tries: document.getElementById('tries')
+    };
+    const targetCoord = document.getElementById('target-coord');
+    const modal = document.getElementById('modal');
+    const modalNext = document.getElementById('modal-next');
+    // --- Helpers ---
+    function randInt(a, b) {
+      return Math.floor(Math.random() * (b - a + 1)) + a;
+    }
+    function newTarget() {
+      target.x = randInt(min, max);
+      target.y = randInt(min, max);
+      dot.x = 0;
+      dot.y = 0;
+      tries = 3;
+      paused = false;
+      updateScoreboard();
+      updateTargetCoord();
+      draw();
+    }
+    function updateTargetCoord() {
+      targetCoord.textContent = `Target: (${target.x}, ${target.y})`;
+    }
+    function updateScoreboard() {
+      scoreboard.correct.textContent = correct;
+      scoreboard.incorrect.textContent = incorrect;
+      scoreboard.tries.textContent = tries;
+    }
+    function showOverlay(type, msg) {
+      overlay.className = type;
+      overlay.textContent = msg;
+      overlay.style.display = 'flex';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 1200);
+    }
+    // --- Drawing ---
+    function draw() {
+      ctx.clearRect(0, 0, plot.width, plot.height);
+      // Draw grid
+      ctx.save();
+      ctx.strokeStyle = '#ddd';
+      ctx.lineWidth = 1;
+      for (let i = min; i <= max; i++) {
+        // vertical
+        let x = toPx(i, 0).x;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, plot.height);
+        ctx.stroke();
+        // horizontal
+        let y = toPx(0, i).y;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(plot.width, y);
+        ctx.stroke();
+      }
+      // Draw axes
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 2;
+      // y axis
+      ctx.beginPath();
+      ctx.moveTo(toPx(0,0).x, 0);
+      ctx.lineTo(toPx(0,0).x, plot.height);
+      ctx.stroke();
+      // x axis
+      ctx.beginPath();
+      ctx.moveTo(0, toPx(0,0).y);
+      ctx.lineTo(plot.width, toPx(0,0).y);
+      ctx.stroke();
+      // Draw numbers
+      ctx.fillStyle = '#888';
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      for (let i = min; i <= max; i++) {
+        if (i !== 0) {
+          // x numbers
+          ctx.fillText(i, toPx(i,0).x, toPx(0,0).y + 2);
+          // y numbers
+          ctx.save();
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(i, toPx(0,0).x - 4, toPx(0,i).y);
+          ctx.restore();
+        }
+      }
+      // Draw movable dot
+      ctx.beginPath();
+      ctx.arc(toPx(dot.x, dot.y).x, toPx(dot.x, dot.y).y, 7, 0, 2*Math.PI);
+      ctx.fillStyle = 'red';
+      ctx.fill();
+      ctx.restore();
+    }
+    function toPx(x, y) {
+      // Map (-10,10) to (0,400)
+      return {
+        x: ((x - min) / (max - min)) * plot.width,
+        y: plot.height - ((y - min) / (max - min)) * plot.height
+      };
+    }
+    // --- Game Logic ---
+    // Mouse move: dot follows mouse
+    plot.addEventListener('mousemove', function(e) {
+      if (paused) return;
+      const rect = plot.getBoundingClientRect();
+      const px = e.clientX - rect.left;
+      const py = e.clientY - rect.top;
+      const x = Math.round(min + (px / plot.width) * (max - min));
+      const y = Math.round(min + ((plot.height - py) / plot.height) * (max - min));
+      dot.x = Math.max(min, Math.min(max, x));
+      dot.y = Math.max(min, Math.min(max, y));
+      draw();
+    });
+
+    // Mouse leave: reset dot to center
+    plot.addEventListener('mouseleave', function() {
+      if (paused) return;
+      dot.x = 0;
+      dot.y = 0;
+      draw();
+    });
+
+    // Click: guess
+    plot.addEventListener('click', function(e) {
+      if (paused) return;
+      // dot.x, dot.y already set by mousemove
+      // Check if correct
+      if (dot.x === target.x && dot.y === target.y) {
+        correct++;
+        showOverlay('green', '😊 CORRECT 😊');
+        setTimeout(() => {
+          newTarget();
+        }, 1200);
+      } else {
+        tries--;
+        incorrect++;
+        showOverlay('red', '😞 WRONG 😞');
+        if (tries === 0) {
+          paused = true;
+          setTimeout(() => {
+            modal.style.display = 'flex';
+          }, 1200);
+        }
+      }
+      updateScoreboard();
+    });
+
+    // Modal next button
+    modalNext.addEventListener('click', function() {
+      modal.style.display = 'none';
+      newTarget();
+    });
+  // --- Init ---
+  newTarget();
+  </script>
+</body>
+</html>
