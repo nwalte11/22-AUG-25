@@ -226,20 +226,22 @@
       ctx.lineTo(plot.width, toPx(0,0).y);
       ctx.stroke();
       // Draw numbers
-  ctx.fillStyle = '#222';
-  ctx.font = `400 ${Math.max(18, plot.width/28)}px 'Inter', 'Segoe UI', Arial, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
+      ctx.fillStyle = '#222';
+      ctx.font = `400 ${Math.max(18, plot.width/28)}px 'Inter', 'Segoe UI', Arial, sans-serif`;
+      // X numbers (bottom, centered on grid lines)
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
       for (let i = min; i <= max; i++) {
         if (i !== 0) {
-          // x numbers
-          ctx.fillText(i, toPx(i,0).x + 8 * Math.sign(i), toPx(0,0).y + 8);
-          // y numbers
-          ctx.save();
-          ctx.textAlign = 'right';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(i, toPx(0,0).x - plot.width/38, toPx(0,i).y + 8 * Math.sign(i));
-          ctx.restore();
+          ctx.fillText(i, toPx(i,0).x, toPx(0, min).y + 4);
+        }
+      }
+      // Y numbers (left, centered on grid lines)
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = min; i <= max; i++) {
+        if (i !== 0) {
+          ctx.fillText(i, toPx(min,0).x - 6, toPx(0,i).y);
         }
       }
       // Draw movable dot
@@ -251,7 +253,7 @@
     }
     function toPx(x, y) {
       // Add margin so numbers are inside the grid
-      const margin = plot.width * 0.06;
+      const margin = plot.width * 0.08; // slightly larger for number space
       const gridSize = plot.width - 2 * margin;
       return {
         x: margin + ((x - min) / (max - min)) * gridSize,
